@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Послуги у фрілансі // Розробка сайтів</title>
+    <style>
+        :root { --bg: #070709; --term: rgba(16, 18, 24, 0.78); --text: #f1f5f9; --gold: #fb923c; --green: #4ade80; --muted: #94a3b8; --border: rgba(251, 146, 60, 0.25); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; overflow: hidden; position: relative; }
+        .lava-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; filter: blur(75px); }
+        .blob { position: absolute; border-radius: 50%; opacity: 0.55; animation: float 16s infinite ease-in-out alternate; }
+        .b1 { width: 420px; height: 420px; background: radial-gradient(circle, #ff5e00, #d97706); top: -10%; left: 10%; animation-duration: 18s; }
+        .b2 { width: 500px; height: 500px; background: radial-gradient(circle, #f97316, #b45309); bottom: -15%; right: 5%; animation-duration: 22s; animation-delay: -5s; }
+        .b3 { width: 320px; height: 320px; background: radial-gradient(circle, #fbbf24, #ea580c); top: 45%; left: 55%; animation-duration: 14s; animation-delay: -9s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(60px, -80px) scale(1.15); } 100% { transform: translate(-70px, 60px) scale(0.9); } }
+        .window { position: relative; z-index: 1; width: 100%; max-width: 1020px; background: var(--term); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(249, 115, 22, 0.12); overflow: hidden; display: flex; flex-direction: column; height: 90vh; max-height: 820px; }
+        .header { background: rgba(24, 27, 35, 0.85); padding: 14px 20px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); }
+        .body { padding: 24px; overflow-y: auto; flex-grow: 1; line-height: 1.65; font-size: 1.02rem; }
+        .line { margin-bottom: 16px; white-space: pre-wrap; }
+        .gold { color: var(--gold); font-weight: bold; }
+        .ok { color: var(--green); }
+        .chips { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 24px; background: rgba(21, 24, 32, 0.8); border-top: 1px solid var(--border); }
+        .chip { background: rgba(251, 146, 60, 0.12); border: 1px solid rgba(251, 146, 60, 0.45); color: var(--gold); padding: 7px 14px; border-radius: 6px; font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+        .chip:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px rgba(251, 146, 60, 0.5); }
+        .input-row { display: flex; align-items: center; padding: 14px 24px; background: rgba(12, 14, 19, 0.9); border-top: 1px solid var(--border); }
+        .prompt { color: var(--gold); margin-right: 12px; font-weight: bold; }
+        input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 1rem; width: 100%; outline: none; }
+        .body::-webkit-scrollbar { width: 6px; }
+        .body::-webkit-scrollbar-thumb { background: rgba(251, 146, 60, 0.3); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<div class="lava-bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="window">
+    <div class="header">
+        <div style="color: var(--gold); font-weight: bold; font-size: 1rem; margin: 0 auto;">Послуги у фрілансі</div>
+    </div>
+    <div class="body" id="out"></div>
+    <div class="chips">
+        <button class="chip" onclick="run('services')">послуги</button>
+        <button class="chip" onclick="run('price')">ціни</button>
+        <button class="chip" onclick="run('contact')">замовити</button>
+        <button class="chip" onclick="run('clear')">очистити</button>
+    </div>
+    <div class="input-row">
+        <span class="prompt">замовник:</span>
+        <input type="text" id="inp" placeholder="Введіть команду або натисніть кнопку вище..." autocomplete="off">
+    </div>
+</div>
+<script>
+    const out = document.getElementById('out');
+    const inp = document.getElementById('inp');
+    let busy = false;
+
+    const data = {
+        help: `Доступні команди: <span class="gold">послуги</span>, <span class="gold">ціни</span>, <span class="gold">замовити</span>, <span class="gold">очистити</span>`,
+        services: `[ПОСЛУГИ]\n1. <span class="gold">Лендінг під ключ</span> — односторінковий сайт із заявками в Telegram.\n2. <span class="gold">Сайт-візитівка</span> — стильне портфоліо з анімаціями.\n3. <span class="gold">Міні-магазин</span> — каталог товарів із фільтрами та кошиком.\n4. <span class="gold">Правки та верстка</span> — адаптив під телефон, прискорення, фікс багів.`,
+        price: `[ЦІНИ ТА ТЕРМІНИ]\n• Правки / проста візитівка: <span class="gold">від 300 грн</span> (1 день)\n• Лендінг під ключ: <span class="gold">від 1 200 грн</span> (2–4 дні)\n• Каталог / багатосторінковий: <span class="gold">від 2 500 грн</span> (4–7 днів)`,
+        contact: `[ЗВ'ЯЗОК]\n• Telegram: <span class="gold">@MixFix25668</span>\n• Email: <span class="gold">kirilholovach@gmail.com</span>\n• Сайт: <span class="gold">Freelancehunt</span>`
+    };
+
+    function writeText(el, html) {
+        return new Promise(res => {
+            busy = true;
+            let i = 0, cur = '', tag = false;
+            function step() {
+                if (i < html.length) {
+                    const c = html[i++];
+                    if (c === '<') tag = true;
+                    cur += c;
+                    if (c === '>') tag = false;
+                    if (tag) return step();
+                    el.innerHTML = cur + '<span class="gold">█</span>';
+                    out.scrollTop = out.scrollHeight;
+                    setTimeout(step, 10);
+                } else {
+                    el.innerHTML = cur;
+                    busy = false;
+                    res();
+                }
+            }
+            step();
+        });
+    }
+
+    async function print(text, isCmd = false) {
+        const div = document.createElement('div');
+        div.className = 'line';
+        out.appendChild(div);
+        if (isCmd) {
+            div.innerHTML = `<span class="prompt">замовник:</span> ${text}`;
+            out.scrollTop = out.scrollHeight;
+            return;
+        }
+        await writeText(div, text);
+    }
+
+    async function run(raw) {
+        if (busy) return;
+        const cmd = raw.trim().toLowerCase().replace('./', '');
+        if (!cmd) return;
+        await print(cmd, true);
+        if (cmd === 'clear' || cmd === 'очистити') { out.innerHTML = ''; return; }
+        const aliases = { 'послуги': 'services', 'ціни': 'price', 'замовити': 'contact' };
+        const key = aliases[cmd] || cmd;
+        if (data[key]) await print(data[key]);
+        else await print(`<span style="color:#ef4444">Помилка:</span> команду '${cmd}' не знайдено. Введіть <span class="gold">help</span>.`);
+    }
+
+    inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { run(inp.value); inp.value = ''; }
+    });
+</script>
+</body>
+</html>
